@@ -1,9 +1,12 @@
 # syntax=docker/dockerfile:1
 FROM python:3.8
 WORKDIR /imdbot
-COPY ../ /.
-RUN pip install -r ../requirements.txt
-CMD python ../automation/manage.py runserver
+COPY ../ ./
+RUN ls -lah
+RUN pip install -r requirments.txt
+RUN python ./automation/manage.py migrate
+EXPOSE 8000
+CMD python ./automation/manage.py runserver 0.0.0.0:8000
 
 
 # dependencies: python3.8 (docker image), django 3.2, selenium, ~/Downloads/chromedriver_v96_0 (exec permissions), djangorestframework_simplejwt

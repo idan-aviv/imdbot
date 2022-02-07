@@ -45,11 +45,12 @@ class ImdbSeleniumDriver:
 
     @staticmethod
     def _create_driver(browser_type: BrowserType, custom_driver_path: str) -> WebDriver:
+
         driver: WebDriver
         if browser_type == BrowserType.CHROME:
             chrome_options = Options()
             chrome_options.add_argument("--headless")
-            driver = webdriver.Chrome(executable_path=custom_driver_path, options=chrome_options)
+            driver = webdriver.Remote(command_executor='http://127.0.0.1:4444/wd/hub', options=chrome_options)
         elif browser_type == BrowserType.FIREFOX:
             driver = webdriver.Firefox(executable_path=custom_driver_path)  # init FF driver here
         else:

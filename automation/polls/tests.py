@@ -7,6 +7,7 @@ from typing import Dict, List
 from unittest import TestCase
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -17,7 +18,7 @@ class SeleniumTest(TestCase):
     # batman token - 4f63268adbfa2f5ec361a3033f8011c3d461721f
     def test_selenium(self):
         driver: ImdbSeleniumDriver = ImdbSeleniumDriver(custom_driver_path='/Users/idan.aviv/Downloads/chromedriver_v98_0')
-        print(driver.query_movies('location', 'America', 200))
+        print(driver.query_movies('location', 'America', 50))
 
 
 @dataclass
@@ -53,7 +54,9 @@ class ImdbSeleniumDriver:
     def _create_driver(browser_type: BrowserType, custom_driver_path: str) -> WebDriver:
         driver: WebDriver
         if browser_type == BrowserType.CHROME:
-            driver = webdriver.Chrome(executable_path=custom_driver_path)
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            driver = webdriver.Remote(command_executor='http://0.0.0.0:4444/wd/hub', options=chrome_options)
         elif browser_type == BrowserType.FIREFOX:
             driver = webdriver.Firefox(executable_path=custom_driver_path)  # init FF driver here
         else:

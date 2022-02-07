@@ -1,4 +1,3 @@
 Selenium
 Django==3.2
 djangorestframework_simplejwt
-python==3.8

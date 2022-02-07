@@ -1,0 +1,18 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  imdbot:
+    build: .
+    ports:
+      - "8000:8000"
+    networks:
+      - apinet
+  selenium-server:
+    image: selenium/standalone-chrome:4.1.2-20220131
+    ports:
+      - "4444:4444"
+    networks:
+      - apinet
+
+networks:
+  apinet:
+    driver: bridge
