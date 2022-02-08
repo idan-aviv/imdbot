@@ -1,8 +1,8 @@
 # Create your views here.
+import traceback
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import List, Callable, Dict
-
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -37,7 +37,8 @@ class ImdbSeleniumDriver:
                                      "result_item_container": ".//div[@class='lister-item mode-detail']",
                                      "title": ".//h3/a",
                                      "year": ".//span[@class='lister-item-year text-muted unbold']",
-                                     "next_bth": "//a[@class='lister-page-next next-page']"}
+                                     "next_bth": "//a[@class='lister-page-next next-page']",
+                                     "score": ".//strong"}
 
     def __init__(self, browser_type: BrowserType = BrowserType.CHROME, custom_driver_path: str = '/usr/local/bin') -> None:
         super().__init__()
@@ -103,7 +104,8 @@ class ImdbSeleniumDriver:
             res: SearchMovieResult = SearchMovieResult(title=res_elm.find_element(By.XPATH, self._create_locator('title')).text,
                                                        year=res_elm.find_element(By.XPATH, self._create_locator('year'))
                                                        .text.replace('(', '').replace(')', ''),
-                                                       score=8.0)  # todo - float(res_elm.find_element(By.XPATH, ".//strong").text)
+                                                       score=float(res_elm.find_element(By.XPATH, self._create_locator('score')).text)
+                                                       if self._is_child_elm_exist(res_elm, By.XPATH, self._create_locator('score')) else 0.0)
             search_results.append(res)
             if len(search_results) == limit:
                 return True
@@ -116,6 +118,14 @@ class ImdbSeleniumDriver:
 
     def quit(self):
         self.driver.quit()
+
+    @staticmethod
+    def _is_child_elm_exist(elm: WebElement, by: By, locator: str) -> bool:
+        try:
+            elm.find_element(by, locator)
+            return True
+        except Exception:
+            return False
 
 
 def index(request):
@@ -147,6 +157,7 @@ class GetImdbMovies(APIView):
         try:
             return Response(data={'response': callable_method(*args)})
         except Exception as ex:
-            return Response(data={'error': str(ex)}, status=400)
+            traceback.print_tb(ex.__traceback__)
+            return Response(data={'error': str(ex)}, status=500)
         finally:
             on_close()

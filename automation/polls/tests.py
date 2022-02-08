@@ -5,9 +5,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Dict, List
 from unittest import TestCase
-
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -44,7 +43,8 @@ class ImdbSeleniumDriver:
                                      "result_item_container": ".//div[@class='lister-item mode-detail']",
                                      "title": ".//h3/a",
                                      "year": ".//span[@class='lister-item-year text-muted unbold']",
-                                     "next_bth": "//a[@class='lister-page-next next-page']"}
+                                     "next_bth": "//a[@class='lister-page-next next-page']",
+                                     "score": ".//strong"}
 
     def __init__(self, browser_type: BrowserType = BrowserType.CHROME, custom_driver_path: str = '/usr/local/bin') -> None:
         super().__init__()
@@ -54,9 +54,7 @@ class ImdbSeleniumDriver:
     def _create_driver(browser_type: BrowserType, custom_driver_path: str) -> WebDriver:
         driver: WebDriver
         if browser_type == BrowserType.CHROME:
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")
-            driver = webdriver.Remote(command_executor='http://0.0.0.0:4444/wd/hub', options=chrome_options)
+            driver = webdriver.Chrome(executable_path='/Users/idan.aviv/Downloads/chromedriver_v98_0')
         elif browser_type == BrowserType.FIREFOX:
             driver = webdriver.Firefox(executable_path=custom_driver_path)  # init FF driver here
         else:
@@ -109,7 +107,8 @@ class ImdbSeleniumDriver:
             res: SearchMovieResult = SearchMovieResult(title=res_elm.find_element(By.XPATH, self._create_locator('title')).text,
                                                        year=res_elm.find_element(By.XPATH, self._create_locator('year'))
                                                        .text.replace('(', '').replace(')', ''),
-                                                       score=8.0)  # todo - float(res_elm.find_element(By.XPATH, ".//strong").text)
+                                                       score=float(res_elm.find_element(By.XPATH, self._create_locator('score')).text)
+                                                           if self._is_child_elm_exist(res_elm, By.XPATH, self._create_locator('score')) else 0.0)
             search_results.append(res)
             if len(search_results) == limit:
                 return True
@@ -122,3 +121,18 @@ class ImdbSeleniumDriver:
 
     def quit(self):
         self.driver.quit()
+
+    def _is_elm_exist(self, by: By, locator: str) -> bool:
+        try:
+            self.driver.find_element(by, locator)
+            return True
+        except NoSuchElementException:
+            return False
+
+    @staticmethod
+    def _is_child_elm_exist(elm: WebElement, by: By, locator: str) -> bool:
+        try:
+            elm.find_element(by, locator)
+            return True
+        except NoSuchElementException:
+            return False
